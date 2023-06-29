@@ -1,4 +1,4 @@
-from icalendar import Calendar, Event
+from icalendar import Calendar, Event, Timezone, TimezoneStandard
 import requests
 import arrow
 from bs4 import BeautifulSoup
@@ -24,24 +24,36 @@ for element in upcoming.find_all("a"):    # すべてのliタグを検索して�
         dict = {}
     hit_count = hit_count + 1
 
-# カレンダーの生成
+## generate calendar
 cal = Calendar()
 cal['prodid'] = 'Kaz - AtCoder Contest Calendar'
 cal['version'] = '2.0'
 cal['method'] = 'PUBLISH'
 cal['calscale'] = 'GREGORIAN'
-cal['x-wr-calname'] = 'AtCoder Contest Calendar'
+cal['x-wr-calname'] = 'AtCoder Contest'
 cal['x-wr-caldesc'] = 'Kazが自動配信するAtCoder Contest Calendar'
 cal['x-wr-timezone'] = 'Asia/Tokyo'
 
-# イベントの生成
+## generate events
 for contest in contests:
     event = Event()
+    event['uid'] = "kaz-atcodercontestschedule-" + contest["dtstart"].format('YYYYMMDD')
     event['summary'] = contest["summary"]
-    event['dtstart'] = contest["dtstart"]
-    event['dtend'] = contest["dtend"]
+    event['dtstart'] = contest["dtstart"].to('UTC').format('YYYYMMDDTHHmmss') + 'Z'
+    event['dtend'] = contest["dtend"].to('UTC').format('YYYYMMDDTHHmmss') + 'Z'
     event['url'] = contest["url"]
     cal.add_component(event)
 
-with open('atcoder_contest_schedule.ics', 'wb') as f:
+## set timezone
+tzs = TimezoneStandard()
+tzs['dtstart'] = '19700101T000000'
+tzs['tzoffsetto'] = '+0900'
+tzs['tzoffsetfrom'] = '+0900'
+tz = Timezone()
+tz['TZID'] = 'Asia/Tokyo'
+tz.add_component(tzs)
+cal.add_component(tz)
+
+## write on file.
+with open('atcoder_contest.ics', 'wb') as f:
     f.write(cal.to_ical())
