@@ -55,5 +55,5 @@ tz.add_component(tzs)
 cal.add_component(tz)
 
 ## write on file.
-with open('atcoder_contest.ics', 'wb') as f:
+with open('/tmp/atcoder_contest.ics', 'wb') as f:
     f.write(cal.to_ical())
