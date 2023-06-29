@@ -4,12 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-ics = "*"
 arrow = "*"
 lxml = "*"
 html5lib = "*"
 beautifulsoup4 = "*"
 requests = "*"
+icalendar = "*"
 
 [dev-packages]
 
