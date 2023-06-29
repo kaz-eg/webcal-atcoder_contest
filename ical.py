@@ -1,4 +1,4 @@
-from ics import Calendar, Event
+from icalendar import Calendar, Event
 import requests
 import arrow
 from bs4 import BeautifulSoup
@@ -15,10 +15,10 @@ for element in upcoming.find_all("a"):    # すべてのliタグを検索して�
     if hit_count % 2 == 0:
         begin = arrow.get(element.text)
         end = begin.shift(minutes=+100)
-        dict["begin"] = begin
-        dict["end"] = end
+        dict["dtstart"] = begin
+        dict["dtend"] = end
     elif hit_count % 2 == 1:
-        dict["name"] = element.text
+        dict["summary"] = element.text
         dict["url"] = "https://atcoder.jp" + element.get('href')
         contests.append(dict)
         dict = {}
@@ -26,16 +26,22 @@ for element in upcoming.find_all("a"):    # すべてのliタグを検索して�
 
 # カレンダーの生成
 cal = Calendar()
-cal.creator = 'Kaz' # 作成者
+cal['prodid'] = 'Kaz - AtCoder Contest Calendar'
+cal['version'] = '2.0'
+cal['method'] = 'PUBLISH'
+cal['calscale'] = 'GREGORIAN'
+cal['x-wr-calname'] = 'AtCoder Contest Calendar'
+cal['x-wr-caldesc'] = 'Kazが自動配信するAtCoder Contest Calendar'
+cal['x-wr-timezone'] = 'Asia/Tokyo'
 
 # イベントの生成
 for contest in contests:
     event = Event()
-    event.name = contest["name"]
-    event.begin = contest["begin"]
-    event.end = contest["end"]
-    event.url = contest["url"]
-    cal.events.add(event)
+    event['summary'] = contest["summary"]
+    event['dtstart'] = contest["dtstart"]
+    event['dtend'] = contest["dtend"]
+    event['url'] = contest["url"]
+    cal.add_component(event)
 
-with open('my.ics', 'w', encoding='utf-8') as f:
-    f.write(str(cal))
+with open('atcoder_contest_schedule.ics', 'wb') as f:
+    f.write(cal.to_ical())
