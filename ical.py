@@ -3,26 +3,64 @@ import requests
 import arrow
 from bs4 import BeautifulSoup
 
+def scraping(url, classOrId="class", className="", idName="", contests=[]):
+
+    html = requests.get(url)
+    soup = BeautifulSoup(html.content, "html.parser")
+    table = None
+    if classOrId == "class":
+        table = soup.find(class_=className)
+    elif classOrId == "id":
+        table = soup.find(id=idName)
+    else:
+        return
+    dict = {}
+    hit_count = 0
+
+    contestsLength = len(contests)
+
+    for element in table.find_all("a"):    # すべてのaタグを検索
+        if hit_count % 2 == 0:
+            begin = arrow.get(element.text)
+            dict["dtstart"] = begin
+        elif hit_count % 2 == 1:
+            dict["summary"] = element.text
+            dict["url"] = "https://atcoder.jp" + element.get('href')
+            contests.append(dict)
+            dict = {}
+        hit_count = hit_count + 1
+
+    hit_count = 0
+
+    for element in table.find_all("td"):    # すべてのtdタグを検索
+        if hit_count % 4 == 2:
+            time = element.text.split(':')
+            dict = contests[(int)(hit_count/4) + (contestsLength)]
+            contests[(int)(hit_count/4) + (contestsLength)]["dtend"] = dict["dtstart"].shift(hours=+int(time[0]), minutes=+int(time[1]))
+
+        if hit_count % 4 == 3:
+            contests[(int)(hit_count/4) + (contestsLength)]["description"] = "Rated対象 : " + element.text
+
+        hit_count = hit_count + 1
+
+
 ## Web Scraping
-url = "https://atcoder.jp/home"
-html = requests.get(url)
-soup = BeautifulSoup(html.content, "html.parser")
-upcoming = soup.find(id='contest-table-upcoming')
+base_url = "https://atcoder.jp"
 contests = []
-dict = {}
-hit_count = 0
-for element in upcoming.find_all("a"):    # すべてのliタグを検索して表示
-    if hit_count % 2 == 0:
-        begin = arrow.get(element.text)
-        end = begin.shift(minutes=+100)
-        dict["dtstart"] = begin
-        dict["dtend"] = end
-    elif hit_count % 2 == 1:
-        dict["summary"] = element.text
-        dict["url"] = "https://atcoder.jp" + element.get('href')
-        contests.append(dict)
-        dict = {}
-    hit_count = hit_count + 1
+
+### Scheduled Contest
+scraping(url=base_url + "/contests", classOrId="id", idName="contest-table-upcoming", contests=contests)
+
+### Archived Contest
+html = requests.get(base_url + "/contests/archive")
+soup = BeautifulSoup(html.content, "html.parser")
+ul = soup.find(class_="pagination-sm")
+maxPage = 1
+for element in ul.find_all("li"):
+    maxPage = int(element.text)
+
+for page in range(1, (maxPage + 1), 1):
+    scraping(url=base_url + "/contests/archive?page=" + str(page), classOrId="class", className="table-responsive", contests=contests)
 
 ## generate calendar
 cal = Calendar()
@@ -41,6 +79,7 @@ for contest in contests:
     event['summary'] = contest["summary"]
     event['dtstart'] = contest["dtstart"].to('UTC').format('YYYYMMDDTHHmmss') + 'Z'
     event['dtend'] = contest["dtend"].to('UTC').format('YYYYMMDDTHHmmss') + 'Z'
+    event['description'] = contest["description"]
     event['url'] = contest["url"]
     cal.add_component(event)
 
