@@ -49,10 +49,10 @@ base_url = "https://atcoder.jp"
 contests = []
 
 ### Scheduled Contest
-scraping(url=base_url + "/contests", classOrId="id", idName="contest-table-upcoming", contests=contests)
+scraping(url=base_url + "/contests/?lang=ja", classOrId="id", idName="contest-table-upcoming", contests=contests)
 
 ### Archived Contest
-html = requests.get(base_url + "/contests/archive")
+html = requests.get(base_url + "/contests/archive?lang=ja")
 soup = BeautifulSoup(html.content, "html.parser")
 ul = soup.find(class_="pagination-sm")
 maxPage = 1
@@ -60,7 +60,7 @@ for element in ul.find_all("li"):
     maxPage = int(element.text)
 
 for page in range(1, (maxPage + 1), 1):
-    scraping(url=base_url + "/contests/archive?page=" + str(page), classOrId="class", className="table-responsive", contests=contests)
+    scraping(url=base_url + "/contests/archive?lang=ja&page=" + str(page), classOrId="class", className="table-responsive", contests=contests)
 
 ## generate calendar
 cal = Calendar()
