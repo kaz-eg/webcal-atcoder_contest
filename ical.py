@@ -75,7 +75,7 @@ cal['x-wr-timezone'] = 'Asia/Tokyo'
 ## generate events
 for contest in contests:
     event = Event()
-    event['uid'] = "kaz-atcodercontestschedule-" + contest["dtstart"].format('YYYYMMDD')
+    event['uid'] = "kaz-atcodercontestschedule-" + contest["dtstart"].format('YYYYMMDDHHmm')
     event['summary'] = contest["summary"]
     event['dtstart'] = contest["dtstart"].to('UTC').format('YYYYMMDDTHHmmss') + 'Z'
     event['dtend'] = contest["dtend"].to('UTC').format('YYYYMMDDTHHmmss') + 'Z'
